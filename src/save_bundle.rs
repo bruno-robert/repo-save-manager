@@ -38,7 +38,23 @@ pub struct SaveBundle {
     pub players: Vec<String>,
 }
 
+/// A SaveBundle represents how REPO stores a save on the disk.
+/// It's a directory with a name like `REPO_SAVE_2025_04_12_15_39_47`,
+/// containing a save file with the same name and the extension `es3`.
+/// For eg. `REPO_SAVE_2025_04_12_15_39_47.es3`.
+///
+/// Sometimes, it will also contain backups of the save with names like
+/// `REPO_SAVE_2025_04_12_15_39_47_BACKUP1.es3`.
+///
+/// The backup files are not read.
+///
+/// ```
+/// - REPO_SAVE_2025_04_12_15_39_47
+/// | -- REPO_SAVE_2025_04_12_15_39_47.es3
+/// ```
+///
 impl SaveBundle {
+    /// Initialise a new SaveBundle object from a save file.
     pub fn new(location: impl AsRef<Path>) -> Result<Self, SaveBundleError> {
         let name = location
             .as_ref()
@@ -62,13 +78,19 @@ impl SaveBundle {
         })
     }
 
+    /// Reads the save file, decrypts it and returns the Deserialised JSON data.
     pub fn get_data(&self) -> Result<repo_save::SaveGame, SaveBundleError> {
-        let mut save_file = self.location.clone();
-        save_file.push(format!("{}.es3", self.name));
+        let save_file = self.location.join(format!("{}.es3", self.name));
         let save_data = read_save_file(&save_file)?;
         Ok(save_data)
     }
 
+    /// Refresh the save metadata stored in the struct by re-reading the save file.
+    /// This is useful if the save has been updated since last read.
+    ///
+    /// This method modifies the following fields:
+    /// - level
+    /// - players
     pub fn refresh_data(&mut self) -> Result<(), SaveBundleError> {
         let save_data = read_save_file(&self.location)?;
         self.level = *save_data
@@ -82,6 +104,7 @@ impl SaveBundle {
     }
 }
 
+/// Read a save file by decrypting it and deserializing the JSON.
 pub fn read_save_file(save_file: impl AsRef<Path>) -> Result<repo_save::SaveGame, SaveBundleError> {
     let save_file = save_file.as_ref();
     if !save_file.exists() {
@@ -97,7 +120,7 @@ pub fn read_save_file(save_file: impl AsRef<Path>) -> Result<repo_save::SaveGame
 }
 
 /// Given a path to a directory as a string, extract a Vector of
-/// SaveDirectory objects.
+/// SaveBundle objects.
 pub fn extract_save_bundles(path: impl AsRef<Path>) -> Vec<SaveBundle> {
     let mut save_bundles = Vec::new();
     let entries = match std::fs::read_dir(path) {
