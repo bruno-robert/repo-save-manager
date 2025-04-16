@@ -3,6 +3,8 @@
 Repo save manager (RSM) is a GUI application, built in rust.
 It allows you to view, backup and restore your saves.
 
+![Screenshot of RSM](./docs/screenshot_1.png)
+
 Currently supported platforms are
 
 - Windows (x86)
