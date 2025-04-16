@@ -1,6 +1,17 @@
-# Cross-Compiling from M1 MacOS
+# REPO Save Manager
 
-## For linux
+Repo save manager (RSM) is a GUI application, built in rust.
+It allows you to view, backup and restore your saves.
+
+Currently supported platforms are
+
+- Windows (x86)
+- Linux (x86)
+- MacOS (apple silicon)
+
+## Cross-Compiling from M1 MacOS
+
+### For linux
 
 [Source Guide](https://medium.com/better-programming/cross-compiling-rust-from-mac-to-linux-7fad5a454ab1)
 
@@ -19,7 +30,7 @@ linker = "x86_64-unknown-linux-gnu-gcc"
 Build
 `cargo build --release --target x86_64-unknown-linux-gnu`
 
-## For Windows
+### For Windows
 
 Install [cargo-xwin](https://github.com/rust-cross/cargo-xwin) and use it.
 
