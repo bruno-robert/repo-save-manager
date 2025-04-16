@@ -2,19 +2,24 @@ use crate::constant;
 use crate::crypt;
 use crate::repo_save;
 use serde_json;
+use std::path::Path;
 use std::path::PathBuf;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum SaveDirectoryError {
+pub enum SaveBundleError {
     #[error("Decryption failed: {0}")]
     DecryptError(crypt::DecryptError),
     #[error("JSON error: {0}")]
     JSONError(serde_json::Error),
     #[error("Failed to get directory name")]
     NoFileName,
-    #[error("Invalid file name encoding")]
+    #[error("Invalid file name")]
     InvalidFileName,
+    #[error("Missing file")]
+    MissingFile,
+    #[error("Expected file")]
+    ExpectedFile,
 }
 
 /// Represents a REPO Save directory (official or backup)
@@ -25,36 +30,75 @@ pub struct SaveBundle {
     /// directory location on disk
     pub location: PathBuf,
 
-    /// optional name (this can be useful to manage multiple
-    /// backups), defaults to the official name (location.name)
+    /// save name
     pub name: String,
+    /// save level
+    pub level: i32,
+    /// player list
+    pub players: Vec<String>,
 }
 
 impl SaveBundle {
-    pub fn new(location: PathBuf) -> Result<Self, SaveDirectoryError> {
+    pub fn new(location: impl AsRef<Path>) -> Result<Self, SaveBundleError> {
         let name = location
+            .as_ref()
             .file_name()
-            .ok_or(SaveDirectoryError::NoFileName)?
+            .ok_or(SaveBundleError::NoFileName)?
             .to_str()
-            .ok_or(SaveDirectoryError::InvalidFileName)?
+            .ok_or(SaveBundleError::InvalidFileName)?
             .to_string();
-        Ok(SaveBundle { location, name })
+        let save_file = location.as_ref().join(format!("{}.es3", &name));
+        let save_data = read_save_file(&save_file)?;
+        Ok(SaveBundle {
+            location: location.as_ref().to_path_buf(),
+            name,
+            level: *save_data
+                .dictionary_of_dictionaries
+                .value
+                .run_stats
+                .get("level")
+                .unwrap_or(&0i32),
+            players: save_data.player_names.value.into_values().collect(),
+        })
     }
 
-    pub fn get_data(&self) -> Result<repo_save::SaveGame, SaveDirectoryError> {
+    pub fn get_data(&self) -> Result<repo_save::SaveGame, SaveBundleError> {
         let mut save_file = self.location.clone();
         save_file.push(format!("{}.es3", self.name));
-        let data: Vec<u8> = crypt::decrypt_es3(&save_file, constant::ENCRYPTION_PASS)
-            .map_err(|e| SaveDirectoryError::DecryptError(e))?;
-        let save_data =
-            serde_json::from_slice(&data).map_err(|e| SaveDirectoryError::JSONError(e))?;
+        let save_data = read_save_file(&save_file)?;
         Ok(save_data)
     }
+
+    pub fn refresh_data(&mut self) -> Result<(), SaveBundleError> {
+        let save_data = read_save_file(&self.location)?;
+        self.level = *save_data
+            .dictionary_of_dictionaries
+            .value
+            .run_stats
+            .get("level")
+            .unwrap_or(&0i32);
+        self.players = save_data.player_names.value.into_values().collect();
+        Ok(())
+    }
+}
+
+pub fn read_save_file(save_file: impl AsRef<Path>) -> Result<repo_save::SaveGame, SaveBundleError> {
+    let save_file = save_file.as_ref();
+    if !save_file.exists() {
+        return Err(SaveBundleError::MissingFile);
+    }
+    if !save_file.is_file() {
+        return Err(SaveBundleError::ExpectedFile);
+    }
+    let data: Vec<u8> = crypt::decrypt_es3(&save_file, constant::ENCRYPTION_PASS)
+        .map_err(|e| SaveBundleError::DecryptError(e))?;
+    let save_data = serde_json::from_slice(&data).map_err(|e| SaveBundleError::JSONError(e))?;
+    Ok(save_data)
 }
 
 /// Given a path to a directory as a string, extract a Vector of
 /// SaveDirectory objects.
-pub fn extract_save_bundles(path: &str) -> Vec<SaveBundle> {
+pub fn extract_save_bundles(path: impl AsRef<Path>) -> Vec<SaveBundle> {
     let mut save_bundles = Vec::new();
     let entries = match std::fs::read_dir(path) {
         Ok(entries) => entries,

@@ -1,5 +1,5 @@
 use eframe;
-use egui::{self, Frame, RichText};
+use egui::{self, Frame, Modal, RichText};
 use log;
 use serde;
 use std::path::PathBuf;
@@ -26,13 +26,13 @@ impl Default for RSMApp {
     fn default() -> Self {
         // $HOME environment variable path
         let home_path = PathBuf::from(std::env::var("HOME").unwrap_or_default());
-        let mut save_directory: PathBuf = home_path.clone();
-        save_directory.push("Documents");
-        save_directory.push("REPO GAME SAVES");
-        save_directory.push("saves");
+        let save_directory: PathBuf = home_path
+            .join("Documents")
+            .join("REPO GAME SAVES")
+            .join("saves");
 
-        let mut backup_directory: PathBuf = home_path.clone();
-        backup_directory.push(".local/share/rsm/backups");
+        let backup_directory: PathBuf = home_path.join(".local/share/rsm/backups");
+
         Self {
             // Example stuff:
             save_directory: save_directory.to_string_lossy().to_string(),
@@ -67,9 +67,13 @@ impl RSMApp {
         self.backup_save_bundles = model::extract_save_bundles(&self.backup_directory);
     }
 
-    fn save_panel(&mut self, ui: &mut egui::Ui, name: &str, save_type: &SaveDirType) {
+    fn save_panel(&mut self, ui: &mut egui::Ui, save_type: &SaveDirType) {
         ui.vertical(|ui| {
             ui.set_width(ui.available_width());
+            let name = match save_type {
+                SaveDirType::GameSave => "Game Saves",
+                SaveDirType::BackupSave => "Backup Saves",
+            };
             ui.label(RichText::new(name).size(16.0));
             ui.add_space(16.0);
 
@@ -117,38 +121,15 @@ impl RSMApp {
     ) {
         ui.label("Name");
         ui.label(&save_bundle.name);
-        let save_data = match save_bundle.get_data() {
-            Ok(data) => data,
-            Err(e) => {
-                log::error!(e:err; "Error occurred when reading save data.");
-                return;
-            }
-        };
+
         ui.end_row();
 
         ui.label("Level");
-        if let Some(level) = save_data
-            .dictionary_of_dictionaries
-            .value
-            .run_stats
-            .get("level")
-        {
-            ui.label(format!("{}", level + 1));
-        } else {
-            ui.label("Failed to retrieve level data.");
-        }
+        ui.label(format!("{}", save_bundle.level + 1));
         ui.end_row();
 
         ui.label("Players");
-        let all_players = save_data
-            .player_names
-            .value
-            .iter()
-            .map(|(_, player_name)| player_name.clone())
-            .collect::<Vec<_>>()
-            .join("\n");
-
-        ui.label(all_players);
+        ui.label(save_bundle.players.join("\n"));
         ui.end_row();
 
         ui.label("Actions");
@@ -163,6 +144,7 @@ impl RSMApp {
                     match res {
                         Ok(_) => {
                             println!("Save backed up successfully");
+                            self.refresh_save_bundles();
                         }
                         Err(err) => {
                             println!("Error backing up save: {}", err);
@@ -173,7 +155,7 @@ impl RSMApp {
             SaveDirType::BackupSave => {
                 if ui.button("Restore Backup").clicked() {
                     let res =
-                        fs_util::copy_directory(&save_bundle.location, &self.save_directory, false);
+                        fs_util::copy_directory(&save_bundle.location, &self.save_directory, true);
                     if let Err(err) = res {
                         match err {
                             fs_util::SaveManagerError::SaveExists => {
@@ -192,14 +174,17 @@ impl RSMApp {
         }
 
         if self.is_restore_model_open {
-            let modal = egui::Modal::new(egui::Id::new(format!(
+            let modal = Modal::new(egui::Id::new(format!(
                 "modal{}{:?}",
                 &save_bundle.name, &save_type
             )))
             .show(ui.ctx(), |ui| {
                 ui.set_width(200.0);
-                ui.heading("Backup will overwite save.");
+                ui.heading("Warning!");
+                ui.label(format!("Backup will overwite save {}.", &save_bundle.name));
+                ui.label(format!("save location {:?}.", &save_bundle.location));
                 ui.label("Do you want to proceed?");
+                ui.label("This action cannot be undone.");
 
                 ui.add_space(32.0);
 
@@ -300,13 +285,13 @@ impl eframe::App for RSMApp {
                 // Save Pannel (Left)
                 ui.vertical(|ui| {
                     ui.set_width(ui.available_width() / 2.0);
-                    self.save_panel(ui, "Saves", &SaveDirType::GameSave);
+                    self.save_panel(ui, &SaveDirType::GameSave);
                 });
 
                 // Backup Pannel (Right)
                 ui.vertical(|ui| {
                     ui.set_width(ui.available_width());
-                    self.save_panel(ui, "Backups", &SaveDirType::BackupSave);
+                    self.save_panel(ui, &SaveDirType::BackupSave);
                 });
             });
         });
