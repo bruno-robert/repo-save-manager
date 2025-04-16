@@ -1,3 +1,5 @@
+//! Structs representing a REPO save file's JSON.
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
