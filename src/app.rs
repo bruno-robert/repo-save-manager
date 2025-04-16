@@ -5,7 +5,7 @@ use serde;
 use std::path::PathBuf;
 use thiserror::Error;
 
-use crate::{fs_util, model};
+use crate::{fs_util, save_bundle};
 
 #[derive(Error, Debug)]
 pub enum RSMError {}
@@ -16,8 +16,8 @@ pub struct RSMApp {
     save_directory: String,
     backup_directory: String,
 
-    game_save_bundles: Vec<model::SaveBundle>,
-    backup_save_bundles: Vec<model::SaveBundle>,
+    game_save_bundles: Vec<save_bundle::SaveBundle>,
+    backup_save_bundles: Vec<save_bundle::SaveBundle>,
 
     is_restore_model_open: bool,
 }
@@ -63,8 +63,8 @@ impl RSMApp {
     }
 
     fn refresh_save_bundles(&mut self) {
-        self.game_save_bundles = model::extract_save_bundles(&self.save_directory);
-        self.backup_save_bundles = model::extract_save_bundles(&self.backup_directory);
+        self.game_save_bundles = save_bundle::extract_save_bundles(&self.save_directory);
+        self.backup_save_bundles = save_bundle::extract_save_bundles(&self.backup_directory);
     }
 
     fn save_panel(&mut self, ui: &mut egui::Ui, save_type: &SaveDirType) {
@@ -93,7 +93,7 @@ impl RSMApp {
         &mut self,
         ui: &mut egui::Ui,
         save_type: &SaveDirType,
-        save_bundle: model::SaveBundle,
+        save_bundle: save_bundle::SaveBundle,
     ) {
         let response = ui.response();
         let visuals = ui.style().interact(&response);
@@ -117,7 +117,7 @@ impl RSMApp {
         &mut self,
         ui: &mut egui::Ui,
         save_type: &SaveDirType,
-        save_bundle: &model::SaveBundle,
+        save_bundle: &save_bundle::SaveBundle,
     ) {
         ui.label("Name");
         ui.label(&save_bundle.name);
