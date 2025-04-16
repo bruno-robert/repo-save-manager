@@ -22,7 +22,7 @@ rustup target add x86_64-unknown-linux-gnu
 brew install SergioBenitez/osxct/x86_64-unknown-linux-gnu
 ```
 
-Add to `Users/bruno/.local/share/cargo/config.toml`
+Add to `~/.cargo/config.toml`
 
 ```toml
 [target.x86_64-unknown-linux-gnu]
