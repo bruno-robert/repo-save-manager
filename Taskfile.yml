@@ -1,0 +1,39 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  PLATFORMS:
+    - aarch64-apple-darwin
+    - x86_64-unknown-linux-gnu
+    - x86_64-pc-windows-msvc
+
+tasks:
+  build-aarch64-apple-darwin:
+    cmds:
+      - cargo build --release --target aarch64-apple-darwin
+  build-x86_64-unknown-linux-gnu:
+    cmds:
+      - cargo build --release --target x86_64-unknown-linux-gnu
+  build-x86_64-pc-windows-msvc:
+    cmds:
+      - cargo xwin build --release --target x86_64-pc-windows-msvc
+  build-all:
+    desc: Builds for all supported platforms one after the other.
+    cmds:
+      - for: { var: PLATFORMS, as: PLATFORM }
+        task: build-{{.PLATFORM}}
+
+  package-release:
+    desc: Moves all the binaries to a single folder for release on github.
+    deps:
+      - build-all
+    cmds:
+      - mkdir -p ./target/full_release
+      - for: { var: PLATFORMS, as: PLATFORM }
+        cmd: |
+          if [[ "{{.PLATFORM}}" == "x86_64-pc-windows-msvc" ]]; then
+            mv ./target/{{.PLATFORM}}/release/rsm.exe ./target/full_release/rsm-{{.PLATFORM}}.exe
+          else
+            mv ./target/{{.PLATFORM}}/release/rsm ./target/full_release/rsm-{{.PLATFORM}}
+          fi
