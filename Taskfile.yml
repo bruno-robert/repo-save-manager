@@ -33,7 +33,7 @@ tasks:
       - for: { var: PLATFORMS, as: PLATFORM }
         cmd: |
           if [[ "{{.PLATFORM}}" == "x86_64-pc-windows-msvc" ]]; then
-            mv ./target/{{.PLATFORM}}/release/rsm.exe ./target/full_release/rsm-{{.PLATFORM}}.exe
+            mv ./target/{{.PLATFORM}}/release/repo-save-manager.exe ./target/full_release/repo-save-manager-{{.PLATFORM}}.exe
           else
-            mv ./target/{{.PLATFORM}}/release/rsm ./target/full_release/rsm-{{.PLATFORM}}
+            mv ./target/{{.PLATFORM}}/release/repo-save-manager ./target/full_release/repo-save-manager-{{.PLATFORM}}
           fi
