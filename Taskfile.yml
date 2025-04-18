@@ -7,6 +7,8 @@ vars:
     - aarch64-apple-darwin
     - x86_64-unknown-linux-gnu
     - x86_64-pc-windows-msvc
+  PROJECT_VERSION:
+    sh: cargo read-manifest | jq -r '.version'
 
 tasks:
   build-aarch64-apple-darwin:
@@ -23,17 +25,40 @@ tasks:
     cmds:
       - for: { var: PLATFORMS, as: PLATFORM }
         task: build-{{.PLATFORM}}
-
+  bundle-aarch64-apple-darwin:
+    deps:
+      - build-aarch64-apple-darwin
+    cmds:
+      - cargo bundle --release --target aarch64-apple-darwin
+  bundle-x86_64-unknown-linux-gnu:
+    deps:
+      - build-x86_64-unknown-linux-gnu
+    cmds:
+      - cargo bundle --release --target x86_64-unknown-linux-gnu
+  bundle-x86_64-pc-windows-msvc:
+    deps:
+      - build-x86_64-pc-windows-msvc
+    cmds:
+      - echo "Windows bundling is not supported yet."
+      # - cargo bundle --release --target x86_64-pc-windows-msvc --format msi
+  bundle-all:
+    cmds:
+      - for: { var: PLATFORMS, as: PLATFORM }
+        task: bundle-{{.PLATFORM}}
   package-release:
     desc: Moves all the binaries to a single folder for release on github.
     deps:
-      - build-all
+      - bundle-all
+    vars:
+      OUTPUT_DIR: ./target/github-release
     cmds:
-      - mkdir -p ./target/full_release
+      - mkdir -p {{.OUTPUT_DIR}}
       - for: { var: PLATFORMS, as: PLATFORM }
         cmd: |
           if [[ "{{.PLATFORM}}" == "x86_64-pc-windows-msvc" ]]; then
-            mv ./target/{{.PLATFORM}}/release/repo-save-manager.exe ./target/full_release/repo-save-manager-{{.PLATFORM}}.exe
+            mv ./target/{{.PLATFORM}}/release/repo-save-manager.exe {{.OUTPUT_DIR}}/repo-save-manager-{{.PLATFORM}}.exe
           else
-            mv ./target/{{.PLATFORM}}/release/repo-save-manager ./target/full_release/repo-save-manager-{{.PLATFORM}}
+            mv ./target/{{.PLATFORM}}/release/repo-save-manager {{.OUTPUT_DIR}}/repo-save-manager-{{.PLATFORM}}
           fi
+      - cmd: mv './target/x86_64-unknown-linux-gnu/release/bundle/deb/repo-save-manager_{{.PROJECT_VERSION}}_amd64.deb' {{.OUTPUT_DIR}}/
+      - cmd: mv './target/aarch64-apple-darwin/release/bundle/osx/R.E.P.O. Save Manager.app' {{.OUTPUT_DIR}}/
