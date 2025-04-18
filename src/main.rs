@@ -1,5 +1,5 @@
 use eframe::egui;
-use rsm::app;
+use repo_save_manager::app;
 
 fn main() {
     let native_options = eframe::NativeOptions {

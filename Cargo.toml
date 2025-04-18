@@ -1,7 +1,13 @@
 [package]
-name = "rsm"
+name = "repo-save-manager"
 version = "0.1.0"
 edition = "2024"
+license = "GNU GENERAL PUBLIC LICENSE Version 3"
+description = "A GUI application to manage R.E.P.O. save files."
+authors = ["Bruno Robert <bruno.jeanluke@icloud.com>"]
+readme = "README.md"
+homepage = "https://github.com/bruno-robert/repo-save-manager"
+repository = "https://github.com/bruno-robert/repo-save-manager"
 
 [dependencies]
 aes = "0.8.4"

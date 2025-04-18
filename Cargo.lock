@@ -2605,6 +2605,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832"
 
 [[package]]
+name = "repo-save-manager"
+version = "0.1.0"
+dependencies = [
+ "aes",
+ "base64 0.22.1",
+ "cbc",
+ "eframe",
+ "egui",
+ "flate2",
+ "fs_extra",
+ "log",
+ "pbkdf2",
+ "rfd",
+ "serde",
+ "serde_json",
+ "sha1",
+ "tempfile",
+ "thiserror 2.0.12",
+ "walkdir",
+]
+
+[[package]]
 name = "rfd"
 version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2638,28 +2660,6 @@ dependencies = [
  "bitflags 2.9.0",
  "serde",
  "serde_derive",
-]
-
-[[package]]
-name = "rsm"
-version = "0.1.0"
-dependencies = [
- "aes",
- "base64 0.22.1",
- "cbc",
- "eframe",
- "egui",
- "flate2",
- "fs_extra",
- "log",
- "pbkdf2",
- "rfd",
- "serde",
- "serde_json",
- "sha1",
- "tempfile",
- "thiserror 2.0.12",
- "walkdir",
 ]
 
 [[package]]
