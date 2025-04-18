@@ -19,6 +19,13 @@ Currently supported platforms are
 
 `cargo install repo-save-manager`
 
+## Manual Install
+
+1. Go to the [releases page](https://github.com/bruno-robert/repo-save-manager/releases)
+2. Download the release for your platform
+3. (linux/macos) Make the binary executable
+4. Run the binary
+
 ## Compiling from source
 
 **pre-requisites**
@@ -31,13 +38,6 @@ Currently supported platforms are
 2. inside the project directory, run `cargo build --release`
 3. locate the executable in `$project_dir/target/release/rsm.exe` (windows) or `$project_dir/target/release/rsm` (linux/macos)
 4. run the executable
-
-## Manual Install
-
-1. Go to the [releases page](https://github.com/bruno-robert/repo-save-manager/releases)
-2. Download the release for your platform
-3. (linux/macos) Make the binary executable
-4. Run the binary
 
 # Usage
 
