@@ -48,7 +48,7 @@ pub struct SaveBundle {
 ///
 /// The backup files are not read.
 ///
-/// ```
+/// ```txt
 /// - REPO_SAVE_2025_04_12_15_39_47
 /// | -- REPO_SAVE_2025_04_12_15_39_47.es3
 /// ```
