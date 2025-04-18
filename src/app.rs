@@ -18,8 +18,19 @@ pub struct RSMApp {
     pub game_save_bundles: Vec<save_bundle::SaveBundle>,
     pub backup_save_bundles: Vec<save_bundle::SaveBundle>,
 
+    /// If not None, contains the name of a backup to restore.
+    /// When not None, this triggers a popup to restore backup with overwrite power.
     #[serde(skip)]
     pub confirm_retore_backup_name: Option<String>,
+
+    /// If not None, contains the name of a backup to delete.
+    /// When not None, this triggers a popup to delete a backup.
+    #[serde(skip)]
+    pub confirm_backup_deletion_name: Option<String>,
+
+    /// true if application window had focus last frame
+    #[serde(skip)]
+    had_focus: bool,
 }
 
 impl Default for RSMApp {
@@ -53,6 +64,8 @@ impl Default for RSMApp {
             game_save_bundles: Vec::new(),
             backup_save_bundles: Vec::new(),
             confirm_retore_backup_name: None,
+            confirm_backup_deletion_name: None,
+            had_focus: false,
         }
     }
 }
@@ -79,6 +92,20 @@ impl RSMApp {
         self.game_save_bundles = save_bundle::extract_save_bundles(&self.save_directory);
         self.backup_save_bundles = save_bundle::extract_save_bundles(&self.backup_directory);
     }
+
+    /// Called when application window gains focus
+    fn on_regain_focus(&mut self) {
+        self.refresh_save_bundles();
+    }
+
+    /// Checks if the focus has changed since last frame and calls focus callbacks a required
+    fn handle_focus(&mut self, ctx: &egui::Context) {
+        let has_focus = ctx.input(|i| i.focused);
+        if has_focus && !self.had_focus {
+            self.on_regain_focus();
+        }
+        self.had_focus = has_focus;
+    }
 }
 
 impl eframe::App for RSMApp {
@@ -89,6 +116,7 @@ impl eframe::App for RSMApp {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.handle_focus(ctx);
         self.ui_top_pannel(ctx);
         self.ui_central_pannel(ctx);
     }

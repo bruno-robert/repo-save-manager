@@ -67,8 +67,8 @@ impl RSMApp {
             });
         });
 
-        // confirmation modal for when we need to ask the user to confirm overwrite
         self.cmp_restore_confirmation_modal(ui);
+        self.cmp_delete_confirmation_modal(ui);
     }
 
     pub fn cmp_save_panel(&mut self, ui: &mut egui::Ui, save_type: &SaveDirType) {
@@ -139,7 +139,7 @@ impl RSMApp {
         ui.label("Actions");
         match &save_type {
             SaveDirType::GameSave => {
-                if ui.button("Backup Save").clicked() {
+                if ui.button("Backup").clicked() {
                     let res = fs_util::copy_directory(
                         &save_bundle.location,
                         &self.backup_directory,
@@ -157,29 +157,43 @@ impl RSMApp {
                 }
             }
             SaveDirType::BackupSave => {
-                if ui.button("Restore Backup").clicked() {
-                    // try and restore but don't overwrite
-                    let res =
-                        fs_util::copy_directory(&save_bundle.location, &self.save_directory, false);
-                    if let Err(err) = res {
-                        match err {
-                            // if save exists, it will return Err, catch it and open the confirmation modal
-                            fs_util::SaveManagerError::SaveExists => {
-                                self.confirm_retore_backup_name = Some(save_bundle.name.clone());
+                ui.horizontal(|ui| {
+                    if ui.button("Restore").clicked() {
+                        // try and restore but don't overwrite
+                        let res = fs_util::copy_directory(
+                            &save_bundle.location,
+                            &self.save_directory,
+                            false,
+                        );
+                        if let Err(err) = res {
+                            match err {
+                                // if save exists, it will return Err, catch it and open the confirmation modal
+                                fs_util::SaveManagerError::SaveExists => {
+                                    self.confirm_retore_backup_name =
+                                        Some(save_bundle.name.clone());
+                                }
+                                _ => {
+                                    log::error!("Error restoring save.");
+                                }
                             }
-                            _ => {
-                                log::error!("Error restoring save.");
-                            }
+                        } else {
+                            println!("Save restored successfully");
+                            self.refresh_save_bundles();
                         }
-                    } else {
-                        println!("Save restored successfully");
-                        self.refresh_save_bundles();
                     }
-                }
+
+                    if ui
+                        .button(egui::RichText::new("Delete").color(egui::Color32::RED))
+                        .clicked()
+                    {
+                        self.confirm_backup_deletion_name = Some(save_bundle.name.clone());
+                    }
+                });
             }
         }
     }
 
+    /// confirmation modal, activated when a restoring a backup would overwrite a save
     pub fn cmp_restore_confirmation_modal(&mut self, ui: &mut egui::Ui) {
         if let Some(backup_name) = &self.confirm_retore_backup_name {
             let backup_save_bundle = &self
@@ -216,13 +230,13 @@ impl RSMApp {
                     |_ui| {},
                     |ui| {
                         if ui.button("Yes").clicked() {
-                            let rest = fs_util::copy_directory(
+                            let res = fs_util::copy_directory(
                                 &backup_save_bundle.location,
                                 &self.save_directory,
                                 true,
                             );
                             self.refresh_save_bundles();
-                            match rest {
+                            match res {
                                 Ok(_) => println!("Save restored successfully"),
                                 Err(e) => log::error!("Error restoring save: {}", e),
                             }
@@ -238,6 +252,64 @@ impl RSMApp {
 
             if modal.should_close() {
                 self.confirm_retore_backup_name = None;
+            }
+        }
+    }
+
+    pub fn cmp_delete_confirmation_modal(&mut self, ui: &mut egui::Ui) {
+        if let Some(backup_name) = &self.confirm_backup_deletion_name {
+            let backup_save_bundle = &self
+                .backup_save_bundles
+                .iter()
+                .find(|s| &s.name == backup_name)
+                .unwrap()
+                .clone();
+
+            let modal =
+                egui::Modal::new(egui::Id::new("backup_delete_modal")).show(ui.ctx(), |ui| {
+                    ui.set_width(400.0);
+                    ui.heading("Warning!");
+                    ui.label(format!(
+                        "Backup will be deleted {}.",
+                        &backup_save_bundle.name
+                    ));
+                    ui.label("Do you want to proceed?");
+                    ui.label("This action cannot be undone.");
+
+                    ui.add_space(32.0);
+
+                    egui::Sides::new().show(
+                        ui,
+                        |_ui| {},
+                        |ui| {
+                            if ui
+                                .button(egui::RichText::new("Yes").color(egui::Color32::RED))
+                                .clicked()
+                            {
+                                // Delete the backup save directory
+                                if let Err(e) =
+                                    std::fs::remove_dir_all(&backup_save_bundle.location)
+                                {
+                                    log::error!("Failed to delete backup: {}", e);
+                                } else {
+                                    log::info!(
+                                        "Backup {} deleted successfully",
+                                        backup_save_bundle.name
+                                    );
+                                }
+                                self.refresh_save_bundles();
+                                self.confirm_backup_deletion_name = None;
+                            }
+
+                            if ui.button("No").clicked() {
+                                self.confirm_backup_deletion_name = None;
+                            }
+                        },
+                    );
+                });
+
+            if modal.should_close() {
+                self.confirm_backup_deletion_name = None;
             }
         }
     }

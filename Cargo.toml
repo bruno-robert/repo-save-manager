@@ -1,6 +1,6 @@
 [package]
 name = "repo-save-manager"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "GNU GENERAL PUBLIC LICENSE Version 3"
 description = "A GUI application to manage R.E.P.O. save files."
