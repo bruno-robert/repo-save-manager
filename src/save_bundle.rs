@@ -100,6 +100,9 @@ impl SaveBundle {
             .get("level")
             .unwrap_or(&0i32);
         self.players = save_data.player_names.value.into_values().collect();
+        // Sorting the player list makes it consistent in the UI later down the line.
+        // The theoretical max len of this list is 6 players so the cost will be quite low.
+        self.players.sort();
         Ok(())
     }
 }
