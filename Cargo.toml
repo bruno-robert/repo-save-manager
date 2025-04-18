@@ -13,6 +13,7 @@ repository = "https://github.com/bruno-robert/repo-save-manager"
 aes = "0.8.4"
 base64 = "0.22.1"
 cbc = { version = "0.1.2", features = ["alloc"] }
+directories-next = "2.0.0"
 eframe = { version = "0.31.1", features = ["persistence", "serde"] }
 egui = { version = "0.31.1", features = ["log"] }
 flate2 = "1.1.1"

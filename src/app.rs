@@ -4,7 +4,7 @@ use serde;
 use std::path::PathBuf;
 use thiserror::Error;
 
-use crate::{fs_util, save_bundle};
+use crate::{constant, fs_util, save_bundle};
 
 #[derive(Error, Debug)]
 pub enum RSMError {}
@@ -25,18 +25,31 @@ pub struct RSMApp {
 impl Default for RSMApp {
     fn default() -> Self {
         // $HOME environment variable path
-        let home_path = PathBuf::from(std::env::var("HOME").unwrap_or_default());
         let save_directory: String =
             fs_util::choose_default_save_path(fs_util::get_repo_save_paths())
                 .map(|p| p.to_string_lossy().to_string())
                 .unwrap_or_default();
 
-        let backup_directory: PathBuf = home_path.join(".local/share/rsm/backups");
+        let project_dir = directories_next::ProjectDirs::from("", "", constant::APP_ID);
+        let backup_directory: String;
+        if let Some(project_dir) = project_dir {
+            backup_directory = project_dir
+                .data_dir()
+                .join("backups")
+                .to_string_lossy()
+                .to_string();
+        } else {
+            let home_path = PathBuf::from(std::env::var("HOME").unwrap_or_default());
+            backup_directory = home_path
+                .join(".local/share/rsm/backups")
+                .to_string_lossy()
+                .to_string();
+        }
 
         Self {
             // Example stuff:
             save_directory,
-            backup_directory: backup_directory.to_string_lossy().to_string(),
+            backup_directory,
             game_save_bundles: Vec::new(),
             backup_save_bundles: Vec::new(),
             confirm_retore_backup_name: None,
