@@ -15,7 +15,9 @@ Currently supported platforms are
 
 ## Installing from package manager
 
-Coming soon ;)
+### cargo
+
+`cargo install repo-save-manager`
 
 ## Compiling from source
 
