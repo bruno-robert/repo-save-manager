@@ -18,8 +18,15 @@ pub struct RSMApp {
     pub game_save_bundles: Vec<save_bundle::SaveBundle>,
     pub backup_save_bundles: Vec<save_bundle::SaveBundle>,
 
+    /// If not None, contains the name of a backup to restore.
+    /// When not None, this triggers a popup to restore backup with overwrite power.
     #[serde(skip)]
     pub confirm_retore_backup_name: Option<String>,
+
+    /// If not None, contains the name of a backup to delete.
+    /// When not None, this triggers a popup to delete a backup.
+    #[serde(skip)]
+    pub confirm_backup_deletion_name: Option<String>,
 
     /// true if application window had focus last frame
     #[serde(skip)]
@@ -57,6 +64,7 @@ impl Default for RSMApp {
             game_save_bundles: Vec::new(),
             backup_save_bundles: Vec::new(),
             confirm_retore_backup_name: None,
+            confirm_backup_deletion_name: None,
             had_focus: false,
         }
     }
