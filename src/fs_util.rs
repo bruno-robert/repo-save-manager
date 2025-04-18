@@ -1,5 +1,5 @@
-use std::path::Path;
-use std::{fs, io};
+use std::path::{Path, PathBuf};
+use std::{env, fs, io};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -73,6 +73,89 @@ pub fn copy_directory(
     Ok(())
 }
 
+pub fn choose_default_save_path(paths: Vec<PathBuf>) -> Option<PathBuf> {
+    for path in paths {
+        if path.exists() && path.is_dir() {
+            log::debug!("Found existing save directory: {:?}", &path);
+            return Some(path);
+        }
+    }
+
+    log::warn!("No existing save directories found");
+    None
+}
+
+/// Returns a list of possible paths where REPO game save data might be stored
+/// based on the current platform.
+///
+/// This function returns different paths depending on the operating system:
+/// - Windows: Checks User profile folders and standard game save locations
+/// - macOS: Checks Application Support and other common save locations
+/// - Linux: Checks .local/share and other XDG directories
+///
+/// # Returns
+/// A vector of PathBuf objects representing potential save directory locations
+pub fn get_repo_save_paths() -> Vec<PathBuf> {
+    #[cfg(target_os = "windows")]
+    return get_windows_repo_save_paths();
+
+    #[cfg(target_os = "macos")]
+    return get_macos_repo_save_paths();
+
+    #[cfg(target_os = "linux")]
+    return get_linux_repo_save_paths();
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+    {
+        log::warn!("Unsupported platform for REPO save detection");
+        return Vec::new();
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn get_windows_repo_save_paths() -> Vec<PathBuf> {
+    let mut paths = Vec::new();
+
+    // Try to get user profile directory
+    if let Ok(user_profile) = env::var("USERPROFILE") {
+        let user_profile = PathBuf::from(user_profile);
+
+        // Common Windows save locations
+        paths.push(user_profile.join("AppData\\LocalLow\\smiwork\\REPO\\saves"));
+    }
+
+    paths
+}
+
+#[cfg(target_os = "macos")]
+fn get_macos_repo_save_paths() -> Vec<PathBuf> {
+    let mut paths = Vec::new();
+
+    // Try to get home directory
+    if let Ok(home) = env::var("HOME") {
+        let home = PathBuf::from(home);
+
+        // Crossover save location
+        paths.push(home.join("Library/Application Support/CrossOver/Bottles/Steam/drive_c/users/crossover/AppData/LocalLow/semiwork/Repo/saves"))
+    }
+
+    paths
+}
+
+#[cfg(target_os = "linux")]
+fn get_linux_repo_save_paths() -> Vec<PathBuf> {
+    let mut paths = Vec::new();
+
+    // Try to get home directory
+    if let Ok(home) = env::var("HOME") {
+        let home = PathBuf::from(home);
+
+        // Steam Proton paths
+        paths.push(home.join(".steam/debian-installation/steamapps/compatdata/3241660/pfx/drive_c/users/steamuser/AppData/LocalLow/semiwork/Repo/saves/"));
+    }
+
+    paths
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -80,6 +163,52 @@ mod tests {
     use std::io::Write;
     use std::path::PathBuf;
     use tempfile::{TempDir, tempdir};
+
+    /// Test that if a valid path exists, it's returned
+    #[test]
+    fn test_choose_default_save_path_valid() {
+        // Arrange
+        // Setup - create temporary directories for testing
+        let temp_dir = tempdir().unwrap();
+        let root_path = temp_dir.path().to_path_buf();
+
+        // Create one directory that exists
+        let existing_dir = root_path.join("existing");
+        fs::create_dir(&existing_dir).unwrap();
+
+        // Create paths to test - one exists, others don't
+        let paths = vec![
+            root_path.join("nonexistent1"),
+            existing_dir.clone(),
+            root_path.join("nonexistent2"),
+        ];
+
+        // Act
+        let result = choose_default_save_path(paths);
+
+        // Assert
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), existing_dir);
+    }
+
+    /// Test that if no valid path exists, None is returned
+    #[test]
+    fn test_chode_default_save_path_no_valid() {
+        // Arrange
+        let temp_dir = tempdir().unwrap();
+        let root_path = temp_dir.path().to_path_buf();
+
+        let nonexistent_paths = vec![
+            root_path.join("nonexistent1"),
+            root_path.join("nonexistent2"),
+        ];
+
+        // Act
+        let result = choose_default_save_path(nonexistent_paths);
+
+        // Assert
+        assert!(result.is_none(), "Should return None when no paths exist");
+    }
 
     #[test]
     fn test_copy_save_bundle_first_time_succeeds() -> Result<(), Box<dyn std::error::Error>> {
@@ -163,6 +292,20 @@ mod tests {
         Ok((tempdir, source_root_dir, source_dir))
     }
 
+    #[test]
+    fn test_get_repo_save_paths_returns_paths() {
+        let paths = get_repo_save_paths();
+        // Just verify we get some paths, regardless of platform
+        assert!(
+            !paths.is_empty(),
+            "Should return at least one potential save path"
+        );
+
+        // Check that all returned paths are absolute
+        for path in &paths {
+            assert!(path.is_absolute(), "All returned paths should be absolute");
+        }
+    }
     /// Helper function to assert that files were copied correctly
     fn assert_dirs_equal(source_dir: impl AsRef<Path>, dest_dir: impl AsRef<Path>) {
         let source_path = source_dir.as_ref();

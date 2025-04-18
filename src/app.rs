@@ -4,7 +4,7 @@ use serde;
 use std::path::PathBuf;
 use thiserror::Error;
 
-use crate::save_bundle;
+use crate::{fs_util, save_bundle};
 
 #[derive(Error, Debug)]
 pub enum RSMError {}
@@ -26,16 +26,16 @@ impl Default for RSMApp {
     fn default() -> Self {
         // $HOME environment variable path
         let home_path = PathBuf::from(std::env::var("HOME").unwrap_or_default());
-        let save_directory: PathBuf = home_path
-            .join("Documents")
-            .join("REPO GAME SAVES")
-            .join("saves");
+        let save_directory: String =
+            fs_util::choose_default_save_path(fs_util::get_repo_save_paths())
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default();
 
         let backup_directory: PathBuf = home_path.join(".local/share/rsm/backups");
 
         Self {
             // Example stuff:
-            save_directory: save_directory.to_string_lossy().to_string(),
+            save_directory,
             backup_directory: backup_directory.to_string_lossy().to_string(),
             game_save_bundles: Vec::new(),
             backup_save_bundles: Vec::new(),
