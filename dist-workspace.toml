@@ -12,7 +12,6 @@ installers = ["msi"]
 # Target platforms to build apps for (Rust target-triple syntax)
 targets = [
     "aarch64-apple-darwin",
-    "aarch64-unknown-linux-gnu",
     "x86_64-apple-darwin",
     "x86_64-unknown-linux-gnu",
     "x86_64-pc-windows-msvc",
@@ -20,3 +19,9 @@ targets = [
 
 [dist.github-custom-runners]
 global = "ubuntu-latest"
+
+[dist.github-custom-runners.x86_64-unknown-linux-gnu]
+runner = "ubuntu-latest"
+
+[dist.github-custom-runners.aarch64-unknown-linux-gnu]
+runner = "ubuntu-latest"
