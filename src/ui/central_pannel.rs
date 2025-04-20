@@ -1,5 +1,5 @@
 use crate::app::RSMApp;
-use crate::{fs_util, save_bundle};
+use crate::{fs_util, rsm};
 use egui;
 
 #[derive(Clone, PartialEq, serde::Deserialize, serde::Serialize, Debug)]
@@ -97,7 +97,7 @@ impl RSMApp {
         &mut self,
         ui: &mut egui::Ui,
         save_type: &SaveDirType,
-        save_bundle: save_bundle::SaveBundle,
+        save_bundle: rsm::save_bundle::SaveBundle,
     ) {
         let response = ui.response();
         let visuals = ui.style().interact(&response);
@@ -121,7 +121,7 @@ impl RSMApp {
         &mut self,
         ui: &mut egui::Ui,
         save_type: &SaveDirType,
-        save_bundle: &save_bundle::SaveBundle,
+        save_bundle: &rsm::save_bundle::SaveBundle,
     ) {
         ui.label("Name");
         ui.label(&save_bundle.name);

@@ -4,7 +4,7 @@ use serde;
 use std::path::PathBuf;
 use thiserror::Error;
 
-use crate::{constant, fs_util, save_bundle};
+use crate::{constant, fs_util, repo, rsm};
 
 #[derive(Error, Debug)]
 pub enum RSMError {}
@@ -15,8 +15,8 @@ pub struct RSMApp {
     pub save_directory: String,
     pub backup_directory: String,
 
-    pub game_save_bundles: Vec<save_bundle::SaveBundle>,
-    pub backup_save_bundles: Vec<save_bundle::SaveBundle>,
+    pub game_save_bundles: Vec<rsm::save_bundle::SaveBundle>,
+    pub backup_save_bundles: Vec<rsm::save_bundle::SaveBundle>,
 
     /// If not None, contains the name of a backup to restore.
     /// When not None, this triggers a popup to restore backup with overwrite power.
@@ -37,7 +37,7 @@ impl Default for RSMApp {
     fn default() -> Self {
         // $HOME environment variable path
         let save_directory: String =
-            fs_util::choose_default_save_path(fs_util::get_repo_save_paths())
+            fs_util::first_existing_dir(repo::utils::get_repo_save_paths())
                 .map(|p| p.to_string_lossy().to_string())
                 .unwrap_or_default();
 
@@ -89,8 +89,8 @@ impl RSMApp {
     }
 
     pub fn refresh_save_bundles(&mut self) {
-        self.game_save_bundles = save_bundle::extract_save_bundles(&self.save_directory);
-        self.backup_save_bundles = save_bundle::extract_save_bundles(&self.backup_directory);
+        self.game_save_bundles = rsm::save_bundle::extract_save_bundles(&self.save_directory);
+        self.backup_save_bundles = rsm::save_bundle::extract_save_bundles(&self.backup_directory);
     }
 
     /// Called when application window gains focus

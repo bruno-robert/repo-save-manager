@@ -1,6 +1,6 @@
 use crate::constant;
-use crate::crypt;
-use crate::repo_save;
+use crate::repo;
+use serde;
 use serde_json;
 use std::path::Path;
 use std::path::PathBuf;
@@ -9,7 +9,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum SaveBundleError {
     #[error("Decryption failed: {0}")]
-    DecryptError(crypt::DecryptError),
+    DecryptError(repo::crypt::DecryptError),
     #[error("JSON error: {0}")]
     JSONError(serde_json::Error),
     #[error("Failed to get directory name")]
@@ -79,7 +79,7 @@ impl SaveBundle {
     }
 
     /// Reads the save file, decrypts it and returns the Deserialised JSON data.
-    pub fn get_data(&self) -> Result<repo_save::SaveGame, SaveBundleError> {
+    pub fn get_data(&self) -> Result<repo::save::SaveGame, SaveBundleError> {
         let save_file = self.location.join(format!("{}.es3", self.name));
         let save_data = read_save_file(&save_file)?;
         Ok(save_data)
@@ -108,7 +108,9 @@ impl SaveBundle {
 }
 
 /// Read a save file by decrypting it and deserializing the JSON.
-pub fn read_save_file(save_file: impl AsRef<Path>) -> Result<repo_save::SaveGame, SaveBundleError> {
+pub fn read_save_file(
+    save_file: impl AsRef<Path>,
+) -> Result<repo::save::SaveGame, SaveBundleError> {
     let save_file = save_file.as_ref();
     if !save_file.exists() {
         return Err(SaveBundleError::MissingFile);
@@ -116,7 +118,7 @@ pub fn read_save_file(save_file: impl AsRef<Path>) -> Result<repo_save::SaveGame
     if !save_file.is_file() {
         return Err(SaveBundleError::ExpectedFile);
     }
-    let data: Vec<u8> = crypt::decrypt_es3(&save_file, constant::ENCRYPTION_PASS)
+    let data: Vec<u8> = repo::crypt::decrypt_es3(&save_file, constant::ENCRYPTION_PASS)
         .map_err(|e| SaveBundleError::DecryptError(e))?;
     let save_data = serde_json::from_slice(&data).map_err(|e| SaveBundleError::JSONError(e))?;
     Ok(save_data)
