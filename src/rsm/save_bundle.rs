@@ -25,7 +25,7 @@ pub enum SaveBundleError {
 /// Represents a REPO Save directory (official or backup)
 /// A save bundle contains a .es3 save file of the same name
 /// as the bundle folder and optionally other backups of the .es3 file.
-#[derive(Clone, serde::Deserialize, serde::Serialize, PartialEq)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize, PartialEq)]
 pub struct SaveBundle {
     /// directory location on disk
     pub location: PathBuf,
