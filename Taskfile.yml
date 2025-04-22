@@ -71,9 +71,9 @@ tasks:
       - for: { var: PLATFORMS, as: PLATFORM }
         cmd: |
           if [[ "{{.PLATFORM}}" == "x86_64-pc-windows-msvc" ]]; then
-            mv ./target/{{.PLATFORM}}/release/repo-save-manager.exe {{.OUTPUT_DIR}}/repo-save-manager-{{.PLATFORM}}.exe
+            mv ./target/{{.PLATFORM}}/release/repo-save-manager.exe {{.OUTPUT_DIR}}/repo-save-manager_{{.PROJECT_VERSION}}-{{.PLATFORM}}.exe
           else
-            mv ./target/{{.PLATFORM}}/release/repo-save-manager {{.OUTPUT_DIR}}/repo-save-manager-{{.PLATFORM}}
+            mv ./target/{{.PLATFORM}}/release/repo-save-manager {{.OUTPUT_DIR}}/repo-save-manager_{{.PROJECT_VERSION}}-{{.PLATFORM}}
           fi
-      - cmd: mv './target/x86_64-unknown-linux-gnu/release/bundle/deb/repo-save-manager_{{.PROJECT_VERSION}}_amd64.deb' {{.OUTPUT_DIR}}/
+      - cmd: mv './target/x86_64-unknown-linux-gnu/release/bundle/deb/repo-save-manager_{{.PROJECT_VERSION}}_amd64.deb' {{.OUTPUT_DIR}}/repo-save-manager_{{.PROJECT_VERSION}}_x86_64.deb
       - cmd: mv './target/aarch64-apple-darwin/release/bundle/osx/R.E.P.O. Save Manager.app' {{.OUTPUT_DIR}}/
