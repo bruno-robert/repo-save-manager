@@ -31,11 +31,6 @@ tempfile = "3.19.1"
 thiserror = "2.0.12"
 walkdir = "2.5.0"
 
-# The profile that 'dist' will build with
-[profile.dist]
-inherits = "release"
-lto = "thin"
-
 [package.metadata.bundle]
 name = "R.E.P.O. Save Manager"
 identifier = "rbr.robertbr.repo-save-manager"
@@ -45,12 +40,6 @@ icon = [
     "resources/icons/128x128@2x.png",
 ]
 category = "utility"
-
-[package.metadata.wix]
-upgrade-guid = "06B5AC3F-7564-4634-8203-6AC5FC47043C"
-path-guid = "2F491733-45C6-439B-B73D-4F7CA77F9488"
-license = false
-eula = false
 
 # Git-cliff configuration
 # https://git-cliff.org/docs/configuration
