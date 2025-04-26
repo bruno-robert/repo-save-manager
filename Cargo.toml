@@ -11,6 +11,7 @@ repository = "https://github.com/bruno-robert/repo-save-manager"
 keywords = ["application", "save", "game", "tool", "repo"]
 categories = ["config", "filesystem"]
 exclude = [".github/*", "LICENSE"]
+build = "build.rs"
 
 [dependencies]
 aes = "0.8.4"
@@ -30,6 +31,9 @@ sha1 = "0.10.6"
 tempfile = "3.19.1"
 thiserror = "2.0.12"
 walkdir = "2.5.0"
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1.12"
 
 [package.metadata.bundle]
 name = "R.E.P.O. Save Manager"
