@@ -26,7 +26,12 @@ pub enum AppEvent {
     // Directory operations
     UpdateSaveDirectory(String),
     UpdateBackupDirectory(String),
+
+    /// Refresh save and backup lists
     RefreshSaves,
+
+    /// Backup all saves
+    BackupAll,
 
     // Save management
     BackupSave(String),
@@ -69,56 +74,49 @@ impl AppController {
                         state.update_save_directory(dir);
                     }
                 }
-
                 AppEvent::UpdateBackupDirectory(dir) => {
                     if let Ok(mut state) = self.state.lock() {
                         state.update_backup_directory(dir);
                     }
                 }
-
                 AppEvent::RefreshSaves => {
                     if let Ok(mut state) = self.state.lock() {
                         state.refresh_save_bundles();
                     }
                 }
-
                 AppEvent::BackupSave(name) => {
                     event_result = Some(self.on_backup_save(name));
                 }
-
                 AppEvent::RequestRestoreBackup(name) => {
                     event_result = Some(self.on_request_restore_backup(name));
                 }
-
                 AppEvent::ConfirmRestoreBackup(name) => {
                     event_result = Some(self.on_confirm_restore_backup(name));
                 }
-
                 AppEvent::CancelRestoreBackup => {
                     if let Ok(mut state) = self.state.lock() {
                         state.clear_restore_confirmation();
                     }
                 }
-
                 AppEvent::RequestDeleteBackup(name) => {
                     if let Ok(mut state) = self.state.lock() {
                         state.confirm_delete_backup(name);
                     }
                 }
-
                 AppEvent::ConfirmDeleteBackup(name) => {
                     event_result = Some(self.on_confirm_delete_backup(name));
                 }
-
                 AppEvent::CancelDeleteBackup => {
                     if let Ok(mut state) = self.state.lock() {
                         state.clear_delete_confirmation();
                     }
                 }
-
                 AppEvent::Exit => {
                     log::info!("Exit requested");
                     break;
+                }
+                AppEvent::BackupAll => {
+                    event_result = Some(self.on_backup_all());
                 }
             }
 
@@ -144,12 +142,25 @@ impl AppController {
         Ok(())
     }
 
+    /// Backup a save
     fn on_backup_save(&self, name: String) -> ControllerResult<()> {
         if let Ok(mut state) = self.state.lock() {
             let save_bundle = get_game_save_bundle(&state, &name)
                 .map_err(|err_msg| ControllerError::BackupFailed(err_msg))?;
             fs_util::copy_directory(&save_bundle.location, &state.backup_directory, true)
                 .map_err(|e| ControllerError::BackupFailed(e.to_string()))?;
+            state.refresh_save_bundles();
+        }
+        Ok(())
+    }
+
+    /// Backup all saves
+    fn on_backup_all(&self) -> ControllerResult<()> {
+        if let Ok(mut state) = self.state.lock() {
+            for save_bundle in state.game_save_bundles.iter() {
+                fs_util::copy_directory(&save_bundle.location, &state.backup_directory, true)
+                    .map_err(|e| ControllerError::BackupFailed(e.to_string()))?;
+            }
             state.refresh_save_bundles();
         }
         Ok(())

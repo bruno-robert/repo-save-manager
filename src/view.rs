@@ -1,4 +1,4 @@
-use eframe::egui;
+use egui::{self, Color32, RichText};
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
@@ -105,9 +105,23 @@ impl AppView {
             }
         });
 
-        if ui.button("Refresh Saves").clicked() {
-            self.event_sender.send(AppEvent::RefreshSaves).unwrap();
-        }
+        ui.horizontal(|ui| {
+            if ui.button("Refresh Saves").clicked() {
+                self.event_sender.send(AppEvent::RefreshSaves).unwrap();
+            }
+            if ui
+                .button(
+                    RichText::new("Backup All").color(if ui.style().visuals.dark_mode {
+                        Color32::GREEN
+                    } else {
+                        Color32::DARK_GREEN
+                    }),
+                )
+                .clicked()
+            {
+                self.event_sender.send(AppEvent::BackupAll).unwrap();
+            }
+        });
     }
 
     fn cmp_central_sync_panel(&self, ui: &mut egui::Ui) {
