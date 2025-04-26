@@ -67,6 +67,7 @@ tasks:
     vars:
       OUTPUT_DIR: ./target/github-release
     cmds:
+      - rm -rf '{{.OUTPUT_DIR}}' || true
       - mkdir -p {{.OUTPUT_DIR}}
       - for: { var: PLATFORMS, as: PLATFORM }
         cmd: |
