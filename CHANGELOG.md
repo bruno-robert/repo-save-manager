@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2025-04-26
+
+### 🚀 Features
+
+- Add icon to .exe artifact
+- Add a "backup all" button
+
+### 🐛 Bug Fixes
+
+- Standardise executable and package names
+
+### ⚙️ Miscellaneous Tasks
+
+- Refactor app into MVC components
+- Remove cargo-dist due to lack of flexibility
+- Add descriptions to tasks in Taskfile
+- Fix release dir not being cleared on new release
+
 ## [0.2.1] - 2025-04-19
 
 ### 🚀 Features
